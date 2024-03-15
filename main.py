@@ -6,6 +6,10 @@ class main_app:
     def __init__(self) -> None:
         self.root = ctk.CTk()
         self.root.title("Neo DNS Changer With Python by Red Mage")
+        self.root.grid_rowconfigure(0, weight=1, pad=10)
+        self.root.grid_columnconfigure(0, weight=1, pad=10)
+        self.root.grid_rowconfigure(1, weight=1, pad=10)
+        self.root.grid_columnconfigure(1, weight=1, pad=10)
         # ? section 1 which is general buttons like activate or delete the selected dns or cmd commands
         self.section_1_frame = ctk.CTkFrame(master=self.root)
         self.section_1_frame.grid(row=0, column=0, columnspan=1, rowspan=1, sticky="nw")
@@ -77,7 +81,7 @@ class main_app:
         # ? also the section where you can choose the Network adapter which by defualt is Wi-fi
         self.section_4_frame = ctk.CTkFrame(master=self.root)
         self.section_4_frame.grid(
-            row=1, column=1, columnspan=1, rowspan=1, sticky="nw", ipadx=30
+            row=1, column=1, columnspan=1, rowspan=1, sticky="se", ipadx=30
         )
 
         self.adapter_selector = ctk.CTkOptionMenu(master=self.section_4_frame).pack(
