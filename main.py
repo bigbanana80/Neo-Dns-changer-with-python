@@ -15,6 +15,16 @@ class main_app:
         self.section_1_frame.grid(
             row=0, column=0, columnspan=1, rowspan=1, sticky="NSEW"
         )
+        self.section_1_frame.grid_rowconfigure(0, weight=1)
+        self.section_1_frame.grid_columnconfigure(0, weight=1)
+        self.section_1_frame.grid_rowconfigure(1, weight=1)
+        self.section_1_frame.grid_columnconfigure(1, weight=1)
+        self.section_1_frame.grid_rowconfigure(2, weight=1)
+        self.section_1_frame.grid_columnconfigure(2, weight=1)
+        self.section_1_frame.grid_rowconfigure(3, weight=1)
+        self.section_1_frame.grid_columnconfigure(3, weight=1)
+        self.section_1_frame.grid_rowconfigure(4, weight=1)
+        self.section_1_frame.grid_columnconfigure(4, weight=1)
 
         self.btn_activate = ctk.CTkButton(
             master=self.section_1_frame, text="Activate"
@@ -43,22 +53,35 @@ class main_app:
         self.s1_logs = ctk.CTkTextbox(
             master=self.section_1_frame, width=250, state=ctk.DISABLED
         ).grid(row=4, column=0, columnspan=2, rowspan=4, padx=10, pady=10)
+
         # ? section 2 which is a list of dns profiles which we can use, manipulate and add new ones at will
         self.section_2_frame = ctk.CTkFrame(master=self.root)
         self.section_2_frame.grid(
             row=0, column=1, columnspan=1, rowspan=1, sticky="NSEW"
         )
+        self.section_2_frame.grid_rowconfigure(0, weight=1)
+        self.section_2_frame.grid_columnconfigure(0, weight=1)
         self.lb_s2_list_info = ctk.CTkLabel(
             master=self.section_2_frame, text="Name \t DNS1 \t DNS2"
-        ).pack(padx=10, pady=10)
+        ).grid(row=0, column=0, padx=10, pady=10)
         self.ls_s2_dns_frame = ctk.CTkScrollableFrame(
             master=self.section_2_frame, height=327
-        ).pack(padx=10, pady=10)
+        ).grid(row=1, column=0, padx=10, pady=10)
+
         # ? section 3  which is a for adding new dns profiles and editing existing ones
         self.section_3_frame = ctk.CTkFrame(master=self.root)
         self.section_3_frame.grid(
             row=1, column=0, columnspan=1, rowspan=1, sticky="NSEW"
         )
+        self.section_3_frame.grid_rowconfigure(0, weight=1)
+        self.section_3_frame.grid_columnconfigure(0, weight=1)
+        self.section_3_frame.grid_rowconfigure(1, weight=1)
+        self.section_3_frame.grid_columnconfigure(1, weight=1)
+        self.section_3_frame.grid_rowconfigure(2, weight=1)
+        self.section_3_frame.grid_columnconfigure(2, weight=1)
+        self.section_3_frame.grid_rowconfigure(3, weight=1)
+        self.section_3_frame.grid_columnconfigure(3, weight=1)
+
         self.lb_s3_name = ctk.CTkLabel(master=self.section_3_frame, text="Name:").grid(
             row=0, column=0, padx=10, pady=10
         )
@@ -89,19 +112,27 @@ class main_app:
         self.section_4_frame.grid(
             row=1, column=1, columnspan=1, rowspan=1, sticky="NSEW", ipadx=30
         )
+        self.section_4_frame.grid_rowconfigure(0, weight=1)
+        self.section_4_frame.grid_columnconfigure(0, weight=1)
+        self.section_4_frame.grid_rowconfigure(1, weight=1)
+        self.section_4_frame.grid_columnconfigure(1, weight=1)
+        self.section_4_frame.grid_rowconfigure(2, weight=1)
+        self.section_4_frame.grid_columnconfigure(2, weight=1)
+        self.section_4_frame.grid_rowconfigure(3, weight=1)
+        self.section_4_frame.grid_columnconfigure(3, weight=1)
 
-        self.adapter_selector = ctk.CTkOptionMenu(master=self.section_4_frame).pack(
-            padx=10, pady=10
+        self.adapter_selector = ctk.CTkOptionMenu(master=self.section_4_frame).grid(
+            row=0, column=0, padx=10, pady=10
         )
         self.lb_s4_current_1st_dns = ctk.CTkLabel(
             master=self.section_4_frame, text="Current Preferred DNS: . . . ."
-        ).pack(padx=10, pady=10)
+        ).grid(row=1, column=0, padx=10, pady=10)
         self.lb_s4_current_2st_dns = ctk.CTkLabel(
             master=self.section_4_frame, text="Current Alternative DNS: . . . ."
-        ).pack(padx=10, pady=10)
+        ).grid(row=2, column=0, padx=10, pady=10)
         self.lb_s4_current_local_ip = ctk.CTkLabel(
             master=self.section_4_frame, text="Current Local ip: . . . ."
-        ).pack(padx=10, pady=10)
+        ).grid(row=3, column=0, padx=10, pady=10)
 
 
 if __name__ == "__main__":
