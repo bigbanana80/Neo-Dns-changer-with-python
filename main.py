@@ -74,18 +74,23 @@ class main_app:
         self.section_1_frame.grid_rowconfigure(4, weight=1)
         self.section_1_frame.grid_columnconfigure(4, weight=1)
 
-        self.btn_activate = ctk.CTkButton(
-            master=self.section_1_frame, text="Activate"
-        ).grid(row=0, column=0, columnspan=1, rowspan=1, padx=10, pady=10)
-        self.btn_delete = ctk.CTkButton(
-            master=self.section_1_frame, text="Delete"
-        ).grid(row=0, column=1, columnspan=1, rowspan=1, padx=10, pady=10)
+        self.btn_activate = ctk.CTkButton(master=self.section_1_frame, text="Activate")
+        self.btn_activate.grid(
+            row=0, column=0, columnspan=1, rowspan=1, padx=10, pady=10
+        )
+        self.btn_delete = ctk.CTkButton(master=self.section_1_frame, text="Delete")
+        self.btn_delete.grid(row=0, column=1, columnspan=1, rowspan=1, padx=10, pady=10)
+
         self.btn_renew = ctk.CTkButton(
-            master=self.section_1_frame, text="Renew IP(auto release)"
-        ).grid(row=1, column=0, columnspan=1, rowspan=1, padx=10, pady=10)
+            master=self.section_1_frame,
+            text="Renew IP(auto release)",
+            command=self.renew_command,
+        )
+        self.btn_renew.grid(row=1, column=0, columnspan=1, rowspan=1, padx=10, pady=10)
         self.btn_flush = ctk.CTkButton(
-            master=self.section_1_frame, text="Flush Dns"
-        ).grid(row=1, column=1, columnspan=1, rowspan=1, padx=10, pady=10)
+            master=self.section_1_frame, text="Flush Dns", command=self.flush_command
+        )
+        self.btn_flush.grid(row=1, column=1, columnspan=1, rowspan=1, padx=10, pady=10)
 
         self.auto_renew_checkbox_var = ctk.StringVar(master=self.section_1_frame)
         self.auto_renew_checkbox_var.set("off")
@@ -203,9 +208,11 @@ class main_app:
         self.section_4_frame.grid_rowconfigure(3, weight=1)
         self.section_4_frame.grid_columnconfigure(3, weight=1)
 
-        self.adapter_selector = ctk.CTkOptionMenu(master=self.section_4_frame).grid(
-            row=0, column=0, padx=10, pady=10
+        self.adapter_selector = ctk.CTkOptionMenu(
+            master=self.section_4_frame, values=addrs
         )
+        self.adapter_selector.set("Wi-Fi")
+        self.adapter_selector.grid(row=0, column=0, padx=10, pady=10)
         self.lb_s4_current_1st_dns = ctk.CTkLabel(
             master=self.section_4_frame, text="Current Preferred DNS: . . . ."
         ).grid(row=1, column=0, padx=10, pady=10)
@@ -246,6 +253,27 @@ class main_app:
         self.s1_logs.delete("0.0", "end")
         self.s1_logs.insert("0.0", value)
         self.s1_logs.configure(state="disabled")
+
+    def flush_command(self):
+        try:
+            subprocess.call("ipconfig /flushdns")
+            self.update_app_log("Successfully flushed the DNS Resolver Cache.")
+        except:
+            self.update_app_log(
+                "Unknown Error :\npossible fix is running the app as admin however report the"
+                + "error to developer at Github."
+            )
+
+    def renew_command(self):
+        try:
+            subprocess.call("ipconfig /release")
+            subprocess.call("ipconfig /renew")
+            self.update_app_log("Successfully flushed the DNS Resolver Cache.")
+        except:
+            self.update_app_log(
+                "Unknown Error :\npossible fix is running the app as admin however report the"
+                + "error to developer at Github."
+            )
 
 
 if __name__ == "__main__":
