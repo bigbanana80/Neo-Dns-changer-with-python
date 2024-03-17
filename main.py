@@ -10,6 +10,7 @@ __email__ = "sepehra90@gmail.com"
 __status__ = "Finished"
 """
 import customtkinter as ctk
+import CTkListbox
 from dataclasses import dataclass
 import subprocess
 import psutil
@@ -74,11 +75,17 @@ class main_app:
         self.section_1_frame.grid_rowconfigure(4, weight=1)
         self.section_1_frame.grid_columnconfigure(4, weight=1)
 
-        self.btn_activate = ctk.CTkButton(master=self.section_1_frame, text="Activate")
+        self.btn_activate = ctk.CTkButton(
+            master=self.section_1_frame,
+            text="Activate",
+            command=self.activate_dns_command,
+        )
         self.btn_activate.grid(
             row=0, column=0, columnspan=1, rowspan=1, padx=10, pady=10
         )
-        self.btn_delete = ctk.CTkButton(master=self.section_1_frame, text="Delete")
+        self.btn_delete = ctk.CTkButton(
+            master=self.section_1_frame, text="Delete", command=self.delete_dns_command
+        )
         self.btn_delete.grid(row=0, column=1, columnspan=1, rowspan=1, padx=10, pady=10)
 
         self.btn_renew = ctk.CTkButton(
@@ -103,7 +110,10 @@ class main_app:
             onvalue="on",
             offvalue="off",
             command=self.auto_renew_checkbox_event,
-        ).grid(row=2, column=0, columnspan=1, rowspan=1, padx=10, pady=10)
+        )
+        self.auto_renew_checkbox.grid(
+            row=2, column=0, columnspan=1, rowspan=1, padx=10, pady=10
+        )
         self.auto_flush_checkbox = ctk.CTkCheckBox(
             master=self.section_1_frame,
             text="Auto flush",
@@ -111,7 +121,10 @@ class main_app:
             onvalue="on",
             offvalue="off",
             command=self.auto_flush_checkbox_event,
-        ).grid(row=2, column=1, columnspan=1, rowspan=1, padx=10, pady=10)
+        )
+        self.auto_flush_checkbox.grid(
+            row=2, column=1, columnspan=1, rowspan=1, padx=10, pady=10
+        )
 
         self.btn_dhcp_dns = ctk.CTkButton(master=self.section_1_frame, text="DHCP Dns")
         self.btn_dhcp_dns.grid(
@@ -145,10 +158,11 @@ class main_app:
         self.lb_s2_list_info = ctk.CTkLabel(
             master=self.section_2_frame, text="Name \t DNS1 \t DNS2"
         ).grid(row=0, column=0, padx=10, pady=10)
-        self.ls_s2_dns_frame = ctk.CTkScrollableFrame(
-            master=self.section_2_frame, height=327
-        ).grid(row=1, column=0, padx=10, pady=10)
-
+        self.ls_s2_dns_list = CTkListbox.CTkListbox(
+            master=self.section_2_frame, width=200, height=400
+        )
+        self.refresh_list()
+        self.ls_s2_dns_list.grid(row=1, column=0, padx=10, pady=10)
         # ? section 3  which is a for adding new dns profiles and editing existing ones
         self.section_3_frame = ctk.CTkFrame(master=self.root)
         self.section_3_frame.grid(
@@ -188,10 +202,10 @@ class main_app:
         self.s3_dns2_entry.grid(row=2, column=1, padx=10, pady=10)
 
         self.btn_add = ctk.CTkButton(
-            master=self.section_3_frame, text="ADD", command=self.add_dns
+            master=self.section_3_frame, text="ADD", command=self.add_dns_command
         ).grid(row=3, column=0, padx=10, pady=10)
         self.btn_edit = ctk.CTkButton(
-            master=self.section_3_frame, text="EDIT", command=self.edit_dns
+            master=self.section_3_frame, text="EDIT", command=self.edit_dns_command
         ).grid(row=3, column=1, padx=10, pady=10)
         # ? section 4 which just shows current DNS config that is active by the host pc and
         # ? also the section where you can choose the Network adapter which by defualt is Wi-fi
@@ -226,13 +240,24 @@ class main_app:
         )
         self.lb_s4_current_local_ip.grid(row=3, column=0, padx=10, pady=10)
 
+    def refresh_list(self):
+        profiles = [
+            f[:-5]
+            for f in os.listdir("profiles")
+            if os.path.isfile(os.path.join("profiles", f))
+        ]
+        profiles.sort()
+        self.ls_s2_dns_list.delete("all")
+        for i in range(len(profiles)):
+            self.ls_s2_dns_list.insert(i, profiles[i])
+
     def auto_renew_checkbox_event(self):
         print(self.auto_renew_checkbox_var.get())
 
     def auto_flush_checkbox_event(self):
         print(self.auto_flush_checkbox_var.get())
 
-    def add_dns(self):
+    def add_dns_command(self):
         name = self.s3_name_entry.get()
         dns1 = self.s3_dns1_entry.get()
         dns2 = self.s3_dns2_entry.get()
@@ -249,9 +274,71 @@ class main_app:
             return
         values = dns(name, dns1, dns2)
         values.save_json()
+        self.refresh_list()
         self.clear_entries()
 
-    def edit_dns(self):
+    def activate_dns_command(self):
+        if self.ls_s2_dns_list.get() == None:
+            self.update_app_log("No selected option Error:\n\nSelect one DNS profile.")
+        else:
+            dns = self.get_dns()
+            interface = self.adapter_selector.get()
+            subprocess.call(
+                f'netsh interface ip set dns name="{interface}" static  {dns.dns1}'
+            )
+            subprocess.call(
+                f'netsh interface ip add dns name="{interface}"  {dns.dns2} index="2"'
+            )
+            flush_flag = False
+            renew_flag = False
+            if self.auto_renew_checkbox_var.get() == "on":
+                subprocess.call("ipconfig /release")
+                subprocess.call("ipconfig /renew")
+                renew_flag = True
+            if self.auto_flush_checkbox_var.get() == "on":
+                subprocess.call("ipconfig /flushdns")
+                flush_flag = True
+            if flush_flag == True and renew_flag == True:
+                self.update_app_log(
+                    f"Dns changed succesfully:\n\nselected dns is {dns.name}\n"
+                    + "\nsuccessfully ran the following commands.\n\nrelease\nrenew\nflushdns"
+                )
+            elif flush_flag == True:
+                self.update_app_log(
+                    f"Dns changed succesfully:\n\nselected dns is {dns.name}\n"
+                    + "\nsuccessfully ran the following commands.\n\nflushdns"
+                )
+            elif renew_flag == True:
+                self.update_app_log(
+                    f"Dns changed succesfully:\n\nselected dns is {dns.name}\n"
+                    + "\nsuccessfully ran the following commands.\n\nrelease\nrenew"
+                )
+            else:
+                self.update_app_log(
+                    f"Dns changed succesfully:\n\nselected dns is {dns.name}"
+                )
+
+    def delete_dns_command(self):
+        if self.ls_s2_dns_list.get() == None:
+            self.update_app_log("No selected option Error:\n\nSelect one DNS profile.")
+        else:
+            conf = self.get_dns()
+            try:
+                os.remove(f"profiles/{conf.name}.json")
+                self.update_app_log(f"File deleted:\n\n{conf.name}")
+            except:
+                self.update_app_log("No such file Error:\nthe file does not exist.")
+            self.refresh_list()
+            self.clear_entries()
+
+    def get_dns(self):
+        name = self.ls_s2_dns_list.get()
+        with open(f"profiles/{name}.json", "r") as file:
+            data: dict = json.load(file)
+        conf = dns(data["name"], data["dns1"], data["dns2"])
+        return conf
+
+    def edit_dns_command(self):
         name = self.s3_name_entry.get()
         dns1 = self.s3_dns1_entry.get()
         dns2 = self.s3_dns2_entry.get()
@@ -268,6 +355,7 @@ class main_app:
             return
         values = dns(name, dns1, dns2)
         values.save_json()
+        self.refresh_list()
         self.clear_entries()
 
     def clear_entries(self):
