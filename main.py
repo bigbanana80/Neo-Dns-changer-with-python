@@ -190,9 +190,9 @@ class main_app:
         self.btn_add = ctk.CTkButton(
             master=self.section_3_frame, text="ADD", command=self.add_dns
         ).grid(row=3, column=0, padx=10, pady=10)
-        self.btn_edit = ctk.CTkButton(master=self.section_3_frame, text="EDIT").grid(
-            row=3, column=1, padx=10, pady=10
-        )
+        self.btn_edit = ctk.CTkButton(
+            master=self.section_3_frame, text="EDIT", command=self.edit_dns
+        ).grid(row=3, column=1, padx=10, pady=10)
         # ? section 4 which just shows current DNS config that is active by the host pc and
         # ? also the section where you can choose the Network adapter which by defualt is Wi-fi
         self.section_4_frame = ctk.CTkFrame(master=self.root)
@@ -215,13 +215,16 @@ class main_app:
         self.adapter_selector.grid(row=0, column=0, padx=10, pady=10)
         self.lb_s4_current_1st_dns = ctk.CTkLabel(
             master=self.section_4_frame, text="Current Preferred DNS: . . . ."
-        ).grid(row=1, column=0, padx=10, pady=10)
+        )
+        self.lb_s4_current_1st_dns.grid(row=1, column=0, padx=10, pady=10)
         self.lb_s4_current_2st_dns = ctk.CTkLabel(
             master=self.section_4_frame, text="Current Alternative DNS: . . . ."
-        ).grid(row=2, column=0, padx=10, pady=10)
+        )
+        self.lb_s4_current_2st_dns.grid(row=2, column=0, padx=10, pady=10)
         self.lb_s4_current_local_ip = ctk.CTkLabel(
             master=self.section_4_frame, text="Current Local ip: . . . ."
-        ).grid(row=3, column=0, padx=10, pady=10)
+        )
+        self.lb_s4_current_local_ip.grid(row=3, column=0, padx=10, pady=10)
 
     def auto_renew_checkbox_event(self):
         print(self.auto_renew_checkbox_var.get())
@@ -233,6 +236,30 @@ class main_app:
         name = self.s3_name_entry.get()
         dns1 = self.s3_dns1_entry.get()
         dns2 = self.s3_dns2_entry.get()
+        if name + ".json" in profiles:
+            self.update_app_log(
+                "Warning :\nFile already exist, use edit instead of Add"
+            )
+            return
+        if name == "" or dns1 == "" or dns2 == "":
+            self.update_app_log(
+                "Empty entry error:\n\nAdd or edit buttons are clicked when one of the entries is empty."
+                + "Please complete the entries with valid values. good example :\n\nGoogle\n8.8.8.8\n8.8.4.4",
+            )
+            return
+        values = dns(name, dns1, dns2)
+        values.save_json()
+        self.clear_entries()
+
+    def edit_dns(self):
+        name = self.s3_name_entry.get()
+        dns1 = self.s3_dns1_entry.get()
+        dns2 = self.s3_dns2_entry.get()
+        if name + ".json" not in profiles:
+            self.update_app_log(
+                "Warning:\nFile does not exist, use Add to make a new profile with the chosen name."
+            )
+            return
         if name == "" or dns1 == "" or dns2 == "":
             self.update_app_log(
                 "Empty entry error:\n\nAdd or edit buttons are clicked when one of the entries is empty."
