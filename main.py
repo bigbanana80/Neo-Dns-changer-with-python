@@ -1,5 +1,29 @@
+# information
+""" my info !
+__author__ = "Sepehr Aghajani"
+__copyright__ = "Copyright 2023, Neo DNS changer with python Project"
+__credits__ = ["Sepehr Aghajani"]
+__license__ = "GPL"
+__version__ = "1.232"
+__maintainer__ = "Sepehr Aghajani"
+__email__ = "sepehra90@gmail.com"
+__status__ = "Finished"
+"""
 import customtkinter as ctk
 import subprocess
+import json
+import os
+import sys
+
+CONFIG = "config.json"
+default_config = {"autoflush": "True"}
+dirname = os.path.dirname(sys.argv[0])
+filename = os.path.join(dirname, "profiles\\")
+if not os.path.exists(filename):
+    os.mkdir(filename)
+if not os.path.exists(CONFIG):
+    with open(CONFIG, "w") as file:
+        json.dump(default_config, file, indent=6)
 
 
 class main_app:
