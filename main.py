@@ -17,6 +17,10 @@ import psutil
 import json
 import os
 import sys
+import threading
+import dns.resolver
+import time
+import socket
 
 # ? this block of code checks if config.json and profiles dir exists, if not makes them
 CONFIG = "config.json"  # ^ instead of this we use settings var to actually use the content of config.json
@@ -40,7 +44,7 @@ with open(CONFIG, "r") as file:
 
 
 @dataclass
-class dns:
+class dns_config:
     name: str
     dns1: str = "0.0.0.0"
     dns2: str = "0.0.0.0"
@@ -126,13 +130,17 @@ class main_app:
             row=2, column=1, columnspan=1, rowspan=1, padx=10, pady=10
         )
 
-        self.btn_dhcp_dns = ctk.CTkButton(master=self.section_1_frame, text="DHCP Dns")
+        self.btn_dhcp_dns = ctk.CTkButton(
+            master=self.section_1_frame, text="DHCP Dns", command=self.dhcp_dns_command
+        )
         self.btn_dhcp_dns.grid(
             row=3, column=0, columnspan=1, rowspan=1, padx=10, pady=10
         )
 
         self.btn_ping_dns = ctk.CTkButton(
-            master=self.section_1_frame, text="Ping selected DNS"
+            master=self.section_1_frame,
+            text="Ping selected DNS",
+            command=self.ping_dns_command,
         )
         self.btn_ping_dns.grid(
             row=3, column=1, columnspan=1, rowspan=1, padx=10, pady=10
@@ -156,10 +164,13 @@ class main_app:
         self.section_2_frame.grid_rowconfigure(0, weight=1)
         self.section_2_frame.grid_columnconfigure(0, weight=1)
         self.lb_s2_list_info = ctk.CTkLabel(
-            master=self.section_2_frame, text="Name \t DNS1 \t DNS2"
+            master=self.section_2_frame, text="Saved DNS profiles"
         ).grid(row=0, column=0, padx=10, pady=10)
         self.ls_s2_dns_list = CTkListbox.CTkListbox(
-            master=self.section_2_frame, width=200, height=400
+            master=self.section_2_frame,
+            width=200,
+            height=400,
+            command=self.fill_entries_command,
         )
         self.refresh_list()
         self.ls_s2_dns_list.grid(row=1, column=0, padx=10, pady=10)
@@ -272,10 +283,10 @@ class main_app:
                 + "Please complete the entries with valid values. good example :\n\nGoogle\n8.8.8.8\n8.8.4.4",
             )
             return
-        values = dns(name, dns1, dns2)
+        values = dns_config(name, dns1, dns2)
         values.save_json()
         self.refresh_list()
-        self.clear_entries()
+        self.clear_entries_command()
 
     def activate_dns_command(self):
         if self.ls_s2_dns_list.get() == None:
@@ -329,13 +340,29 @@ class main_app:
             except:
                 self.update_app_log("No such file Error:\nthe file does not exist.")
             self.refresh_list()
-            self.clear_entries()
+            self.clear_entries_command()
+
+    def dhcp_dns_command(self):
+        interface = self.adapter_selector.get()
+        subprocess.call(f'netsh interface ip set dns name="{interface}" dhcp')
+        subprocess.call(f"ipconfig /flushdns")
+        self.update_app_log("DNS set to the selected DNS by DHCP.")
+
+    def ping_dns_command(self):
+        self.update_app_log("Pinging...")
+        if self.ls_s2_dns_list.get() == None:
+            self.update_app_log("No selected option Error:\n\nSelect one DNS profile.")
+        else:
+            dns = self.get_dns()
+            p1 = subprocess.check_output(f"ping {dns.dns1}")
+            p2 = subprocess.check_output(f"ping {dns.dns2}")
+            self.update_app_log(f"{p1}\n{p2}")
 
     def get_dns(self):
         name = self.ls_s2_dns_list.get()
         with open(f"profiles/{name}.json", "r") as file:
             data: dict = json.load(file)
-        conf = dns(data["name"], data["dns1"], data["dns2"])
+        conf = dns_config(data["name"], data["dns1"], data["dns2"])
         return conf
 
     def edit_dns_command(self):
@@ -353,15 +380,25 @@ class main_app:
                 + "Please complete the entries with valid values. good example :\n\nGoogle\n8.8.8.8\n8.8.4.4",
             )
             return
-        values = dns(name, dns1, dns2)
+        values = dns_config(name, dns1, dns2)
         values.save_json()
         self.refresh_list()
-        self.clear_entries()
+        self.clear_entries_command()
 
-    def clear_entries(self):
+    def clear_entries_command(self):
         self.s3_name_entry.delete(0, ctk.END)
         self.s3_dns1_entry.delete(0, ctk.END)
         self.s3_dns2_entry.delete(0, ctk.END)
+
+    def fill_entries_command(self, item):
+        self.clear_entries_command()
+        dns = self.get_dns()
+        self.s3_name_entry.delete(0, ctk.END)
+        self.s3_dns1_entry.delete(0, ctk.END)
+        self.s3_dns2_entry.delete(0, ctk.END)
+        self.s3_name_entry.insert(0, dns.name)
+        self.s3_dns1_entry.insert(0, dns.dns1)
+        self.s3_dns2_entry.insert(0, dns.dns2)
 
     def update_app_log(self, value: str):
         self.s1_logs.configure(state="normal")
@@ -390,9 +427,31 @@ class main_app:
                 + "error to developer at Github."
             )
 
+    def update_info_label(self):
+        dns_resolver = dns.resolver.Resolver()
+        dns1 = dns_resolver.nameservers[0]
+        dns2 = dns_resolver.nameservers[1]
+        self.lb_s4_current_1st_dns.configure(text=f"Current Preferred DNS: {dns1}")
+        self.lb_s4_current_2st_dns.configure(text=f"Current Alternative DNS: {dns2}")
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.settimeout(0)
+        try:
+            # doesn't even have to be reachable
+            s.connect(("10.254.254.254", 1))
+            IP = s.getsockname()[0]
+        except Exception:
+            IP = "127.0.0.1"
+        finally:
+            s.close()
+        self.lb_s4_current_local_ip.configure(text=f"Current Local ip: {IP}")
+        time.sleep(1)
+        self.update_info_label()
+
 
 if __name__ == "__main__":
 
     app = main_app()
+    label_update_thread = threading.Thread(target=app.update_info_label, daemon=True)
+    label_update_thread.start()
     # ? main loop
     app.root.mainloop()
