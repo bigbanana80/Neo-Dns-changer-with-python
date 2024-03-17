@@ -10,13 +10,16 @@ __email__ = "sepehra90@gmail.com"
 __status__ = "Finished"
 """
 import customtkinter as ctk
+from dataclasses import dataclass
 import subprocess
+import psutil
 import json
 import os
 import sys
 
-CONFIG = "config.json"
-default_config = {"autoflush": "True"}
+# ? this block of code checks if config.json and profiles dir exists, if not makes them
+CONFIG = "config.json"  # ^ instead of this we use settings var to actually use the content of config.json
+default_config = {"autoFlush": "True", "autoRenew": "False"}
 dirname = os.path.dirname(sys.argv[0])
 filename = os.path.join(dirname, "profiles\\")
 if not os.path.exists(filename):
@@ -24,6 +27,22 @@ if not os.path.exists(filename):
 if not os.path.exists(CONFIG):
     with open(CONFIG, "w") as file:
         json.dump(default_config, file, indent=6)
+
+
+# ? some startup vars including network adapter names, existing profiles in profiles dir and config.json content
+addrs = [nic for nic in psutil.net_if_addrs()]  # ^ all NICs in the current pc
+profiles = [
+    f for f in os.listdir("profiles") if os.isfile(os.join("profiles", f))
+]  # ^ all dns profiles in the profiles dir
+with open(CONFIG, "r") as file:
+    settings = json.loads(file.read())  # ^ loading settings in the config.json
+
+
+@dataclass
+class dns:
+    name: str
+    dns1: str = "0.0.0.0"
+    dns2: str = "0.0.0.0"
 
 
 class main_app:
@@ -62,12 +81,28 @@ class main_app:
         self.btn_flush = ctk.CTkButton(
             master=self.section_1_frame, text="Flush Dns"
         ).grid(row=1, column=1, columnspan=1, rowspan=1, padx=10, pady=10)
+
+        self.auto_renew_checkbox_var = ctk.StringVar(master=self.section_1_frame)
+        self.auto_renew_checkbox_var.set("off")
+        self.auto_flush_checkbox_var = ctk.StringVar(master=self.section_1_frame)
+        self.auto_flush_checkbox_var.set("off")
         self.auto_renew_checkbox = ctk.CTkCheckBox(
-            master=self.section_1_frame, text="Auto Renew ip"
+            master=self.section_1_frame,
+            text="Auto Renew ip",
+            variable=self.auto_renew_checkbox_var,
+            onvalue="on",
+            offvalue="off",
+            command=self.auto_renew_checkbox_event,
         ).grid(row=2, column=0, columnspan=1, rowspan=1, padx=10, pady=10)
         self.auto_flush_checkbox = ctk.CTkCheckBox(
-            master=self.section_1_frame, text="Auto flush"
+            master=self.section_1_frame,
+            text="Auto flush",
+            variable=self.auto_flush_checkbox_var,
+            onvalue="on",
+            offvalue="off",
+            command=self.auto_flush_checkbox_event,
         ).grid(row=2, column=1, columnspan=1, rowspan=1, padx=10, pady=10)
+
         self.btn_dhcp_dns = ctk.CTkButton(
             master=self.section_1_frame, text="DHCP Dns"
         ).grid(row=3, column=0, columnspan=1, rowspan=1, padx=10, pady=10)
@@ -157,6 +192,12 @@ class main_app:
         self.lb_s4_current_local_ip = ctk.CTkLabel(
             master=self.section_4_frame, text="Current Local ip: . . . ."
         ).grid(row=3, column=0, padx=10, pady=10)
+
+    def auto_renew_checkbox_event(self):
+        print(self.auto_renew_checkbox_var.get())
+
+    def auto_flush_checkbox_event(self):
+        print(self.auto_flush_checkbox_var.get())
 
 
 if __name__ == "__main__":
