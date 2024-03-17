@@ -108,15 +108,27 @@ class main_app:
             command=self.auto_flush_checkbox_event,
         ).grid(row=2, column=1, columnspan=1, rowspan=1, padx=10, pady=10)
 
-        self.btn_dhcp_dns = ctk.CTkButton(
-            master=self.section_1_frame, text="DHCP Dns"
-        ).grid(row=3, column=0, columnspan=1, rowspan=1, padx=10, pady=10)
+        self.btn_dhcp_dns = ctk.CTkButton(master=self.section_1_frame, text="DHCP Dns")
+        self.btn_dhcp_dns.grid(
+            row=3, column=0, columnspan=1, rowspan=1, padx=10, pady=10
+        )
+
         self.btn_ping_dns = ctk.CTkButton(
             master=self.section_1_frame, text="Ping selected DNS"
-        ).grid(row=3, column=1, columnspan=1, rowspan=1, padx=10, pady=10)
+        )
+        self.btn_ping_dns.grid(
+            row=3, column=1, columnspan=1, rowspan=1, padx=10, pady=10
+        )
+
         self.s1_logs = ctk.CTkTextbox(
-            master=self.section_1_frame, width=250, state=ctk.DISABLED
-        ).grid(row=4, column=0, columnspan=2, rowspan=4, padx=10, pady=10)
+            master=self.section_1_frame, width=250, wrap="word"
+        )
+        self.s1_logs.insert(
+            "0.0",
+            "The log of the last action you take appear here including the errors with solutions.",
+        )
+        self.s1_logs.configure(state=ctk.DISABLED)
+        self.s1_logs.grid(row=4, column=0, columnspan=2, rowspan=4, padx=10, pady=10)
 
         # ? section 2 which is a list of dns profiles which we can use, manipulate and add new ones at will
         self.section_2_frame = ctk.CTkFrame(master=self.root)
@@ -171,7 +183,7 @@ class main_app:
         self.s3_dns2_entry.grid(row=2, column=1, padx=10, pady=10)
 
         self.btn_add = ctk.CTkButton(
-            master=self.section_3_frame, text="ADD", command=self.save_dns
+            master=self.section_3_frame, text="ADD", command=self.add_dns
         ).grid(row=3, column=0, padx=10, pady=10)
         self.btn_edit = ctk.CTkButton(master=self.section_3_frame, text="EDIT").grid(
             row=3, column=1, padx=10, pady=10
@@ -210,22 +222,30 @@ class main_app:
     def auto_flush_checkbox_event(self):
         print(self.auto_flush_checkbox_var.get())
 
-    def save_dns(self):
+    def add_dns(self):
         name = self.s3_name_entry.get()
         dns1 = self.s3_dns1_entry.get()
         dns2 = self.s3_dns2_entry.get()
+        if name == "" or dns1 == "" or dns2 == "":
+            self.update_app_log(
+                "Empty entry error:\n\nAdd or edit buttons are clicked when one of the entries is empty."
+                + "Please complete the entries with valid values. good example :\n\nGoogle\n8.8.8.8\n8.8.4.4",
+            )
+            return
         values = dns(name, dns1, dns2)
         values.save_json()
+        self.clear_entries()
+
+    def clear_entries(self):
         self.s3_name_entry.delete(0, ctk.END)
         self.s3_dns1_entry.delete(0, ctk.END)
         self.s3_dns2_entry.delete(0, ctk.END)
 
-    #     refresh_list()
-
-    # def clear(self):
-    #     self.dns1_input.clear()
-    #     self.dns2_input.clear()
-    #     self.name_input.clear()
+    def update_app_log(self, value: str):
+        self.s1_logs.configure(state="normal")
+        self.s1_logs.delete("0.0", "end")
+        self.s1_logs.insert("0.0", value)
+        self.s1_logs.configure(state="disabled")
 
 
 if __name__ == "__main__":
