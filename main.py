@@ -32,7 +32,7 @@ if not os.path.exists(CONFIG):
 # ? some startup vars including network adapter names, existing profiles in profiles dir and config.json content
 addrs = [nic for nic in psutil.net_if_addrs()]  # ^ all NICs in the current pc
 profiles = [
-    f for f in os.listdir("profiles") if os.isfile(os.join("profiles", f))
+    f for f in os.listdir("profiles") if os.path.isfile(os.path.join("profiles", f))
 ]  # ^ all dns profiles in the profiles dir
 with open(CONFIG, "r") as file:
     settings = json.loads(file.read())  # ^ loading settings in the config.json
@@ -43,6 +43,11 @@ class dns:
     name: str
     dns1: str = "0.0.0.0"
     dns2: str = "0.0.0.0"
+
+    def save_json(self):
+        values = {"name": self.name, "dns1": self.dns1, "dns2": self.dns2}
+        with open(f"profiles/{self.name}.json", "w") as file:
+            json.dump(values, file, indent=6)
 
 
 class main_app:
@@ -146,22 +151,28 @@ class main_app:
         )
         self.s3_name_entry = ctk.CTkEntry(
             master=self.section_3_frame, placeholder_text="name"
-        ).grid(row=0, column=1, padx=10, pady=10)
+        )
+        self.s3_name_entry.grid(row=0, column=1, padx=10, pady=10)
+
         self.lb_s3_dns1 = ctk.CTkLabel(
             master=self.section_3_frame, text="Preferred DNS:"
         ).grid(row=1, column=0, padx=10, pady=10)
         self.s3_dns1_entry = ctk.CTkEntry(
             master=self.section_3_frame, placeholder_text="Valid DNS like 1.1.1.1"
-        ).grid(row=1, column=1, padx=10, pady=10)
+        )
+        self.s3_dns1_entry.grid(row=1, column=1, padx=10, pady=10)
+
         self.lb_s3_dns2 = ctk.CTkLabel(
             master=self.section_3_frame, text="Alternative DNS:"
         ).grid(row=2, column=0, padx=10, pady=10)
         self.s3_dns2_entry = ctk.CTkEntry(
             master=self.section_3_frame, placeholder_text="Valid DNS like 1.0.0.1"
-        ).grid(row=2, column=1, padx=10, pady=10)
-        self.btn_add = ctk.CTkButton(master=self.section_3_frame, text="ADD").grid(
-            row=3, column=0, padx=10, pady=10
         )
+        self.s3_dns2_entry.grid(row=2, column=1, padx=10, pady=10)
+
+        self.btn_add = ctk.CTkButton(
+            master=self.section_3_frame, text="ADD", command=self.save_dns
+        ).grid(row=3, column=0, padx=10, pady=10)
         self.btn_edit = ctk.CTkButton(master=self.section_3_frame, text="EDIT").grid(
             row=3, column=1, padx=10, pady=10
         )
@@ -198,6 +209,23 @@ class main_app:
 
     def auto_flush_checkbox_event(self):
         print(self.auto_flush_checkbox_var.get())
+
+    def save_dns(self):
+        name = self.s3_name_entry.get()
+        dns1 = self.s3_dns1_entry.get()
+        dns2 = self.s3_dns2_entry.get()
+        values = dns(name, dns1, dns2)
+        values.save_json()
+        self.s3_name_entry.delete(0, ctk.END)
+        self.s3_dns1_entry.delete(0, ctk.END)
+        self.s3_dns2_entry.delete(0, ctk.END)
+
+    #     refresh_list()
+
+    # def clear(self):
+    #     self.dns1_input.clear()
+    #     self.dns2_input.clear()
+    #     self.name_input.clear()
 
 
 if __name__ == "__main__":
