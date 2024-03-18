@@ -262,11 +262,37 @@ class main_app:
         for i in range(len(profiles)):
             self.ls_s2_dns_list.insert(i, profiles[i])
 
+    def load_settings(self):
+        with open("config.json", "r") as file:
+            s = json.loads(file.read())
+        if s["autoRenew"] == "true":
+            self.auto_renew_checkbox_var.set("on")
+        else:
+            self.auto_renew_checkbox_var.set("off")
+        if s["autoFlush"] == "true":
+            self.auto_flush_checkbox_var.set("on")
+        else:
+            self.auto_flush_checkbox_var.set("off")
+
     def auto_renew_checkbox_event(self):
-        print(self.auto_renew_checkbox_var.get())
+        with open("config.json", "r") as file:
+            s = json.loads(file.read())
+            if self.auto_renew_checkbox_var.get() == "on":
+                s["autoRenew"] = "true"
+            else:
+                s["autoRenew"] = "false"
+        with open("config.json", "w") as file:
+            json.dump(s, file, indent=6)
 
     def auto_flush_checkbox_event(self):
-        print(self.auto_flush_checkbox_var.get())
+        with open("config.json", "r") as file:
+            s = json.loads(file.read())
+            if self.auto_flush_checkbox_var.get() == "on":
+                s["autoFlush"] = "true"
+            else:
+                s["autoFlush"] = "false"
+        with open("config.json", "w") as file:
+            json.dump(s, file, indent=6)
 
     def add_dns_command(self):
         name = self.s3_name_entry.get()
@@ -451,6 +477,7 @@ class main_app:
 if __name__ == "__main__":
 
     app = main_app()
+    app.load_settings()
     label_update_thread = threading.Thread(target=app.update_info_label, daemon=True)
     label_update_thread.start()
     # ? main loop
