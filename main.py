@@ -1,10 +1,10 @@
 # information
 """ my info !
 __author__ = "Sepehr Aghajani"
-__copyright__ = "Copyright 2023, Neo DNS changer with python Project"
+__copyright__ = "Copyright 2024, Neo DNS changer with python Project"
 __credits__ = ["Sepehr Aghajani"]
 __license__ = "GPL"
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 __maintainer__ = "Sepehr Aghajani"
 __email__ = "sepehra90@gmail.com"
 __status__ = "Finished"
