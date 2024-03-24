@@ -474,11 +474,14 @@ class main_app:
         self.update_info_label()
 
 
-if __name__ == "__main__":
-
+def startApp():
     app = main_app()
     app.load_settings()
     label_update_thread = threading.Thread(target=app.update_info_label, daemon=True)
     label_update_thread.start()
     # ? main loop
     app.root.mainloop()
+
+
+if __name__ == "__main__":
+    startApp()
